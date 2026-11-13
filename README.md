@@ -6,6 +6,12 @@ Cloudflare Pages builds this repository straight from GitHub: every push to `mai
 
 To preview locally, open `index.html` in a browser, or run `python3 -m http.server`.
 
+## The FAQ and structured data
+
+The FAQ lives in `tools/faq.py`, which writes both the visible FAQ section and the schema.org `FAQPage` markup into `index.html`, so the two always say the same thing. To change a question or answer, edit the list there and run `python3 tools/faq.py`. The same script writes the rest of the JSON-LD graph (`Organization`, `WebSite`, `WebPage`, `SoftwareSourceCode`).
+
+`og.png` is the 1200×630 link-preview image, a screenshot of `tools/og.html`. `robots.txt` and `sitemap.xml` point crawlers at the one page.
+
 ## Keeping it accurate
 
 Every claim about another protocol links to its source code, its authors' documentation, or a peer-reviewed measurement. Xray-core was read at `c456141` and REALITY at `4a26e87` (November 2026). When those projects change, recheck the comparison table against them. Samizdat's own numbers come from its pull requests ([#25](https://github.com/getlantern/samizdat/pull/25), [#28](https://github.com/getlantern/samizdat/pull/28), [#29](https://github.com/getlantern/samizdat/pull/29)).
