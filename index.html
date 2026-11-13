@@ -3,10 +3,192 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Samizdat</title>
-<meta name="description" content="Samizdat is a censorship-circumvention protocol that hides proxy traffic inside a browser-like TLS 1.3 and HTTP/2 connection to a real website, and shapes the start of each connection like real TLS.">
-<meta property="og:title" content="Samizdat">
+<title>Samizdat: a censorship-circumvention protocol from Lantern</title>
+<meta name="description" content="Samizdat is an open-source censorship-circumvention protocol from Lantern. It hides proxy traffic inside a browser-like TLS 1.3 and HTTP/2 connection to a real website, shapes the start of each connection like real TLS, and compares favourably with VLESS, XTLS Vision and REALITY.">
+<link rel="canonical" href="https://samizdat.lantern.io/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Samizdat">
+<meta property="og:url" content="https://samizdat.lantern.io/">
+<meta property="og:title" content="Samizdat: a censorship-circumvention protocol from Lantern">
 <meta property="og:description" content="Proxy traffic that opens like a browser visiting a real website, measured against 326 million real TLS flows.">
+<meta property="og:image" content="https://samizdat.lantern.io/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Samizdat: proxy traffic shaped like real TLS">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Samizdat: a censorship-circumvention protocol from Lantern">
+<meta name="twitter:description" content="Proxy traffic that opens like a browser visiting a real website, measured against 326 million real TLS flows.">
+<meta name="twitter:image" content="https://samizdat.lantern.io/og.png">
+<meta name="theme-color" content="#f1ecdf" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14172a" media="(prefers-color-scheme: dark)">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://lantern.io/#organization",
+   "name": "Lantern",
+   "legalName": "Brave New Software Project, Inc.",
+   "url": "https://lantern.io",
+   "sameAs": [
+    "https://github.com/getlantern"
+   ]
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://samizdat.lantern.io/#website",
+   "url": "https://samizdat.lantern.io/",
+   "name": "Samizdat",
+   "publisher": {
+    "@id": "https://lantern.io/#organization"
+   },
+   "inLanguage": "en"
+  },
+  {
+   "@type": "WebPage",
+   "@id": "https://samizdat.lantern.io/#webpage",
+   "url": "https://samizdat.lantern.io/",
+   "name": "Samizdat: a censorship-circumvention protocol from Lantern",
+   "isPartOf": {
+    "@id": "https://samizdat.lantern.io/#website"
+   },
+   "about": {
+    "@id": "https://samizdat.lantern.io/#software"
+   },
+   "primaryImageOfPage": "https://samizdat.lantern.io/og.png",
+   "inLanguage": "en"
+  },
+  {
+   "@type": "SoftwareSourceCode",
+   "@id": "https://samizdat.lantern.io/#software",
+   "name": "Samizdat",
+   "description": "Samizdat is an open-source censorship-circumvention protocol from Lantern. It carries proxy traffic inside TLS 1.3 and HTTP/2 connections that look like a browser visiting a real website. The server authenticates its own clients inside the TLS handshake and hands everything else to a real cover site, and the first records after the handshake are shaped to match a model of real TLS traffic.",
+   "codeRepository": "https://github.com/getlantern/samizdat",
+   "programmingLanguage": "Go",
+   "license": "https://www.apache.org/licenses/LICENSE-2.0",
+   "url": "https://samizdat.lantern.io/",
+   "author": {
+    "@id": "https://lantern.io/#organization"
+   },
+   "keywords": "censorship circumvention, proxy protocol, TLS, HTTP/2, REALITY, VLESS, XTLS Vision, traffic shaping, active probing"
+  },
+  {
+   "@type": "FAQPage",
+   "@id": "https://samizdat.lantern.io/#faq",
+   "isPartOf": {
+    "@id": "https://samizdat.lantern.io/#webpage"
+   },
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "What is Samizdat?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Samizdat is an open-source censorship-circumvention protocol from Lantern. It carries proxy traffic inside TLS 1.3 and HTTP/2 connections that look like a browser visiting a real website. The server authenticates its own clients inside the TLS handshake and hands everything else to a real cover site, and the first records after the handshake are shaped to match a model of real TLS traffic."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How is Samizdat different from VLESS and XTLS Vision?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "VLESS sends its client ID inside TLS and falls back to a server the operator runs, behind the operator's own certificate. Vision adds padding to the inner TLS handshake. Neither shapes the start of the connection: CenKL (IEEE S&P 2027) found both send telltale 1,208-byte packets right after the handshake, and 71.7% of Vision connections start with one. Samizdat sends probes to a real cover site, multiplexes over HTTP/2, turns off the record sizing behind those 1,208-byte packets, and shapes its first 10 records. See the comparison."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is Samizdat the same as REALITY?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No, but its version 2 authentication follows REALITY's design: an X25519 secret between the client's key share and the server's key, sealing a time and short ID into the TLS SessionID, bound to the whole ClientHello. Samizdat adds a replay filter (REALITY has none, and a 2026 proof of concept detects REALITY by replaying handshakes), checks the time by default, doesn't need the cover site to be reachable for its own clients, multiplexes over HTTP/2, and shapes the start of each connection."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Can censors detect Samizdat?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No proxy that carries real traffic is invisible, and nobody outside Lantern has evaluated Samizdat yet. Measured against CenKL's model of 326.5 million real TLS flows, Samizdat's connection starts score 12.4 nats of divergence, against 11.3 for real TLS sampled from the same model and 63.0 before shaping. Timing isn't shaped, and tunnelled TLS is still inside the connection; see Limits."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How does Samizdat resist active probing?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "A handshake without a valid authentication tag, or one that has been used before, is forwarded byte for byte to the real cover site, so a prober sees that site's certificate, TLS behaviour and pages. The server remembers the SessionIDs it has accepted for 24 to 48 hours, and version 2 tags expire 12 hours either side of the server's clock, so replaying a captured handshake doesn't work either."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What is connection-start shaping?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Researchers found that proxies stand out in the first few packets after the TLS handshake, before much user data flows. Samizdat's client and server derive a shared seed from the TLS session, draw the same schedule of 10 record sizes and directions from CenKL's model of real TLS, and send exactly those records, carrying their own data and padding the rest. After the tenth record, data passes straight through."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does Samizdat avoid TLS-in-TLS detection?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Partly. Applications tunnelled through Samizdat bring their own TLS, so there is TLS inside Samizdat's TLS, as with any proxy. Samizdat multiplexes every stream over HTTP/2, which Xue et al. (USENIX Security 2024) found lowers their attack's true positive rate by over 70% when two or more streams share a connection, and much less with one. Samizdat hasn't been measured against that attack."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How is Samizdat different from Shadowsocks?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Shadowsocks traffic is encrypted from its first byte, and China's Great Firewall has flagged it by the length and entropy of the first packet (IMC 2020). Samizdat opens with a standard TLS 1.3 ClientHello with Chrome's fingerprint, like a browser."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does Samizdat use UDP or QUIC?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. Samizdat runs over TCP only, so networks that block UDP, as some in Russia do, don't affect it."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is Samizdat open source?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Yes. Samizdat is written in Go and released under the Apache License 2.0 at github.com/getlantern/samizdat. The library has no sing-box dependency; lantern-box adds a sing-box inbound and outbound."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How do I use Samizdat?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The easiest way is to download Lantern, which uses Samizdat among its protocols. Developers can use the Go library or lantern-box's sing-box inbound and outbound; see Use it."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Who makes Samizdat?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Lantern, a nonprofit VPN and censorship-circumvention project run by Brave New Software Project, Inc."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Why is it called Samizdat?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Samizdat (Russian самиздат, \"self-published\") was the practice of copying banned writing by hand and passing it on in secret in the Soviet Union."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="fonts.css">
@@ -205,6 +387,14 @@ pre.sheet { overflow-x: auto; white-space: pre; margin: 16px 0; font-size: 13.5p
 .limits li { padding-left: 34px; position: relative; }
 .limits li::before { content: "✕"; position: absolute; left: 0; top: 0; font-family: var(--type); font-weight: 700; color: var(--pencil); }
 
+/* FAQ */
+.faq { margin-top: 10px; }
+.faq .qa { border-top: 1px solid var(--rule); padding: 18px 0 4px; }
+.faq .qa:first-child { border-top: 2px solid var(--ink); }
+.faq h3 { margin: 0 0 8px; font-size: 21px; }
+.faq .q, .faq .a { font-family: var(--type); font-weight: 700; color: var(--pencil); margin-right: .35em; }
+.faq .a { color: var(--carbon); }
+
 /* References */
 .refs { font-size: 15.5px; padding-left: 1.4em; }
 .refs li { margin-bottom: .7em; }
@@ -245,17 +435,20 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       <a href="#compare">Compared</a>
       <a href="#how">How it works</a>
       <a href="#limits">Limits</a>
+      <a href="#faq">FAQ</a>
       <a href="https://github.com/getlantern/samizdat">GitHub</a>
+      <a href="https://lantern.io">Lantern</a>
     </nav>
   </header>
 
   <div class="hero">
-    <div class="kicker reveal" style="--i:0">A censorship-circumvention protocol from Lantern</div>
+    <div class="kicker reveal" style="--i:0">A censorship-circumvention protocol from <a href="https://lantern.io">Lantern</a></div>
     <h1 class="reveal" style="--i:1">Samizdat<span class="ru">самиздат: copied by hand, passed on in secret</span></h1>
     <p class="lede reveal" style="--i:2">Proxy traffic inside an ordinary TLS&nbsp;1.3 and HTTP/2 connection to a real website, with <em>the start of each tunnel connection shaped like real TLS</em>.</p>
     <div class="cta reveal" style="--i:3">
       <a class="btn primary" href="https://github.com/getlantern/samizdat">Read the source</a>
       <a class="btn" href="#compare">Compare with VLESS, Vision, REALITY</a>
+      <a class="btn" href="https://lantern.io/download">Get Lantern</a>
     </div>
     <div class="stamp" aria-hidden="true">Shaped to<br>326,531,763<br>real TLS flows</div>
   </div>
@@ -504,7 +697,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     <span class="num">06 — use it</span>
     <h2>Use it</h2>
     <div class="col">
-      <p>Samizdat is a Go library with no sing-box dependency, and an inbound and outbound in <a href="https://github.com/getlantern/lantern-box">lantern-box</a>. Lantern's apps use it today.</p>
+      <p><strong>The easiest way to use Samizdat is <a href="https://lantern.io/download">Lantern</a></strong>, the free app for Android, iOS, Windows, macOS and Linux, which uses it among its protocols. For developers, Samizdat is a Go library with no sing-box dependency, and an inbound and outbound in <a href="https://github.com/getlantern/lantern-box">lantern-box</a>.</p>
     </div>
 <pre class="sheet">go get github.com/getlantern/samizdat
 
@@ -533,9 +726,72 @@ conn, err := client.DialContext(ctx, "tcp", "example.com:443")</pre>
   </div>
 </section>
 
+<section id="faq">
+  <div class="wrap">
+    <span class="num">07 — questions</span>
+    <h2>FAQ</h2>
+    <div class="faq col">
+      <!-- faq:start -->
+      <div class="qa" id="what-is-samizdat">
+        <h3><span class="q">Q.</span> What is Samizdat?</h3>
+        <p><span class="a">A.</span> Samizdat is an open-source censorship-circumvention protocol from <a href="https://lantern.io">Lantern</a>. It carries proxy traffic inside TLS&nbsp;1.3 and HTTP/2 connections that look like a browser visiting a real website. The server authenticates its own clients inside the TLS handshake and hands everything else to a real cover site, and the first records after the handshake are shaped to match a model of real TLS traffic.</p>
+      </div>
+      <div class="qa" id="how-is-samizdat-different-from-vless-and-xtls-vision">
+        <h3><span class="q">Q.</span> How is Samizdat different from VLESS and XTLS Vision?</h3>
+        <p><span class="a">A.</span> VLESS sends its client ID inside TLS and falls back to a server the operator runs, behind the operator's own certificate. Vision adds padding to the inner TLS handshake. Neither shapes the start of the connection: CenKL (IEEE S&amp;P 2027) found both send telltale 1,208-byte packets right after the handshake, and 71.7% of Vision connections start with one. Samizdat sends probes to a real cover site, multiplexes over HTTP/2, turns off the record sizing behind those 1,208-byte packets, and shapes its first 10 records. See the <a href="#compare">comparison</a>.</p>
+      </div>
+      <div class="qa" id="is-samizdat-the-same-as-reality">
+        <h3><span class="q">Q.</span> Is Samizdat the same as REALITY?</h3>
+        <p><span class="a">A.</span> No, but its version 2 authentication follows REALITY's design: an X25519 secret between the client's key share and the server's key, sealing a time and short ID into the TLS SessionID, bound to the whole ClientHello. Samizdat adds a replay filter (REALITY has none, and a 2026 proof of concept detects REALITY by replaying handshakes), checks the time by default, doesn't need the cover site to be reachable for its own clients, multiplexes over HTTP/2, and shapes the start of each connection.</p>
+      </div>
+      <div class="qa" id="can-censors-detect-samizdat">
+        <h3><span class="q">Q.</span> Can censors detect Samizdat?</h3>
+        <p><span class="a">A.</span> No proxy that carries real traffic is invisible, and nobody outside Lantern has evaluated Samizdat yet. Measured against CenKL's model of 326.5 million real TLS flows, Samizdat's connection starts score 12.4 nats of divergence, against 11.3 for real TLS sampled from the same model and 63.0 before shaping. Timing isn't shaped, and tunnelled TLS is still inside the connection; see <a href="#limits">Limits</a>.</p>
+      </div>
+      <div class="qa" id="how-does-samizdat-resist-active-probing">
+        <h3><span class="q">Q.</span> How does Samizdat resist active probing?</h3>
+        <p><span class="a">A.</span> A handshake without a valid authentication tag, or one that has been used before, is forwarded byte for byte to the real cover site, so a prober sees that site's certificate, TLS behaviour and pages. The server remembers the SessionIDs it has accepted for 24 to 48 hours, and version 2 tags expire 12 hours either side of the server's clock, so replaying a captured handshake doesn't work either.</p>
+      </div>
+      <div class="qa" id="what-is-connection-start-shaping">
+        <h3><span class="q">Q.</span> What is connection-start shaping?</h3>
+        <p><span class="a">A.</span> Researchers found that proxies stand out in the first few packets after the TLS handshake, before much user data flows. Samizdat's client and server derive a shared seed from the TLS session, draw the same schedule of 10 record sizes and directions from CenKL's model of real TLS, and send exactly those records, carrying their own data and padding the rest. After the tenth record, data passes straight through.</p>
+      </div>
+      <div class="qa" id="does-samizdat-avoid-tls-in-tls-detection">
+        <h3><span class="q">Q.</span> Does Samizdat avoid TLS-in-TLS detection?</h3>
+        <p><span class="a">A.</span> Partly. Applications tunnelled through Samizdat bring their own TLS, so there is TLS inside Samizdat's TLS, as with any proxy. Samizdat multiplexes every stream over HTTP/2, which Xue et al. (USENIX Security 2024) found lowers their attack's true positive rate by over 70% when two or more streams share a connection, and much less with one. Samizdat hasn't been measured against that attack.</p>
+      </div>
+      <div class="qa" id="how-is-samizdat-different-from-shadowsocks">
+        <h3><span class="q">Q.</span> How is Samizdat different from Shadowsocks?</h3>
+        <p><span class="a">A.</span> Shadowsocks traffic is encrypted from its first byte, and China's Great Firewall has flagged it by the length and entropy of the first packet (IMC 2020). Samizdat opens with a standard TLS&nbsp;1.3 ClientHello with Chrome's fingerprint, like a browser.</p>
+      </div>
+      <div class="qa" id="does-samizdat-use-udp-or-quic">
+        <h3><span class="q">Q.</span> Does Samizdat use UDP or QUIC?</h3>
+        <p><span class="a">A.</span> No. Samizdat runs over TCP only, so networks that block UDP, as some in Russia do, don't affect it.</p>
+      </div>
+      <div class="qa" id="is-samizdat-open-source">
+        <h3><span class="q">Q.</span> Is Samizdat open source?</h3>
+        <p><span class="a">A.</span> Yes. Samizdat is written in Go and released under the Apache License 2.0 at <a href="https://github.com/getlantern/samizdat">github.com/getlantern/samizdat</a>. The library has no sing-box dependency; <a href="https://github.com/getlantern/lantern-box">lantern-box</a> adds a sing-box inbound and outbound.</p>
+      </div>
+      <div class="qa" id="how-do-i-use-samizdat">
+        <h3><span class="q">Q.</span> How do I use Samizdat?</h3>
+        <p><span class="a">A.</span> The easiest way is to <a href="https://lantern.io/download">download Lantern</a>, which uses Samizdat among its protocols. Developers can use the Go library or lantern-box's sing-box inbound and outbound; see <a href="#use">Use it</a>.</p>
+      </div>
+      <div class="qa" id="who-makes-samizdat">
+        <h3><span class="q">Q.</span> Who makes Samizdat?</h3>
+        <p><span class="a">A.</span> <a href="https://lantern.io">Lantern</a>, a nonprofit VPN and censorship-circumvention project run by Brave New Software Project, Inc.</p>
+      </div>
+      <div class="qa" id="why-is-it-called-samizdat">
+        <h3><span class="q">Q.</span> Why is it called Samizdat?</h3>
+        <p><span class="a">A.</span> Samizdat (Russian самиздат, "self-published") was the practice of copying banned writing by hand and passing it on in secret in the Soviet Union.</p>
+      </div>
+      <!-- faq:end -->
+    </div>
+  </div>
+</section>
+
 <section id="refs">
   <div class="wrap">
-    <span class="num">07 — sources</span>
+    <span class="num">08 — sources</span>
     <h2>References</h2>
     <ol class="refs col">
       <li>Aaron Ortwein, Armin Huremagic, Shabbir Hussain, Holly Bergen, Joshua J. Daymude, Diwen Xue, Jedidiah R. Crandall, Roya Ensafi. <a href="https://aaron-ortwein.github.io/papers/cenkl.pdf"><em>CenKL: Information-Theoretic Visibility into Censorship Circumvention Traffic Patterns.</em></a> IEEE Symposium on Security and Privacy, 2027. Models and ProxyShaper: <a href="https://github.com/censoredplanet/obfuscation">censoredplanet/obfuscation</a>, <a href="https://github.com/censoredplanet/Xray-ProxyShaper">censoredplanet/Xray-ProxyShaper</a>.</li>
