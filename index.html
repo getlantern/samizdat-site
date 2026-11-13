@@ -419,7 +419,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
           </tr>
           <tr>
             <th scope="row">TLS-in-TLS detection (TPR)</th>
-            <td class="sz"><span class="tag m">Not measured</span><br>Tunnelled TLS is still inside; HTTP/2 multiplexing and splitting inner records across DATA frames are meant to blur it</td>
+            <td class="sz"><span class="tag m">Not measured</span><br>Tunnelled TLS is still inside; HTTP/2 multiplexing is meant to blur it, most when several streams share the connection</td>
             <td>0.748<span class="src">Xue et al. 2024, Table 3</span></td>
             <td>0.513 at 0.20% FPR, with a classifier built for Vision<span class="src">Xue et al. 2024, §7.2</span></td>
             <td><span class="tag m">Not measured</span></td>
