@@ -281,7 +281,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       <div class="sheet reveal" style="--i:2">
         <h3>Probing the server</h3>
         <ol>
-          <li>Any ClientHello without a valid tag, or one that has already been used, is forwarded byte for byte to the real cover site the server is configured with. (Probes that don't start with a TLS handshake are closed; see Limits.)</li>
+          <li>Anything without a valid tag is forwarded byte for byte to the real cover site the server is configured with: a ClientHello that fails, one that has already been used, or bytes that aren't TLS at all.</li>
           <li>The prober completes a real handshake with the cover site's real certificate and gets its real HTTP responses. The server doesn't rewrite or decrypt any of it.</li>
           <li>Replaying a captured ClientHello doesn't work either: the server remembers the SessionIDs it has accepted for 24 to 48 hours (less under very heavy load), and a version 2 tag expires 12 hours either side of the server's clock.</li>
           <li>Clients can pin the server's certificate, so a client that's been sent to the cover site fails instead of talking to it.</li>
@@ -428,7 +428,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
           </tr>
           <tr>
             <th scope="row">Timing</th>
-            <td class="sz"><span class="tag n">Not shaped</span><br>Optional 1–30 ms delay before each client write, which research suggests doesn't help (see Limits)</td>
+            <td class="sz"><span class="tag n">Not shaped</span><br>A random per-write delay was removed after research found it doesn't help (see Limits)</td>
             <td><span class="tag n">Not shaped</span></td>
             <td><span class="tag n">Not shaped</span></td>
             <td><span class="tag n">Not shaped</span></td>
@@ -458,7 +458,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       </div>
       <div>
         <h3><span class="num">B</span>Masquerade</h3>
-        <p>A connection that doesn't authenticate is spliced, raw, to the cover site's real address. The server reads only the ClientHello it needs to check the tag, sends it on to the cover site, and copies bytes both ways, without rewriting them or terminating TLS, until both sides close or ten minutes pass.</p>
+        <p>A connection that doesn't authenticate is spliced, raw, to the cover site's real address. The server reads only the first record it needs to check the tag, sends it on to the cover site, and copies bytes both ways, without rewriting them or terminating TLS, until both sides close or ten minutes pass. That includes connections that never send a ClientHello: whatever arrived goes to the cover site, which decides how to answer.</p>
       </div>
       <div>
         <h3><span class="num">C</span>Connection-start shaping</h3>
@@ -487,12 +487,11 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
     <div class="col">
       <p>No proxy that carries real traffic is invisible. These are the gaps we know about.</p>
       <ul class="limits">
-        <li><strong>Timing isn't shaped.</strong> CenKL's timing-aware classifier still reaches about 0.9 recall against shaped traffic. Samizdat's optional 1–30 ms random delay isn't a fix: Xue et al. (NDSS 2025) found that random delays like obfs4's can make cross-layer RTT fingerprinting easier, not harder.</li>
+        <li><strong>Timing isn't shaped.</strong> CenKL's timing-aware classifier still reaches about 0.9 recall against shaped traffic. Samizdat used to add a random 1–30 ms delay before each write; it was removed because Xue et al. (NDSS 2025) found that random delays like obfs4's can make cross-layer RTT fingerprinting easier, not harder.</li>
         <li><strong>Tunnelled TLS is still inside.</strong> Applications using samizdat bring their own TLS, so there is TLS inside samizdat's TLS. Multiplexing helps most when several streams share the connection; Xue et al. (USENIX Security 2024) found it far weaker with only one.</li>
         <li><strong>Shaping covers ten records.</strong> After that, traffic is whatever the tunnelled applications send. The schedule fixes TLS record sizes; TCP can still split or merge them into packets.</li>
         <li><strong>The model is one network's view.</strong> It was built from one regional ISP in late 2025. Real TLS elsewhere, or later, may look different, and a censor with its own data can build its own model.</li>
         <li><strong>The replay record lives in memory.</strong> A server restart forgets the SessionIDs it has accepted, and more than a million in one window shortens how long they're kept. Version 2's 12-hour time limit still applies.</li>
-        <li><strong>Probes that aren't TLS are closed.</strong> A connection that doesn't open with a TLS handshake record is closed rather than forwarded to the cover site, so it doesn't see how the cover site would react.</li>
         <li><strong>Not independently reviewed.</strong> The version 2 authentication hasn't had an outside cryptographic review, and the measurements on this page are ours, on loopback.</li>
       </ul>
     </div>
