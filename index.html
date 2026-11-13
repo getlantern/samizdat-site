@@ -399,6 +399,12 @@ pre.sheet { overflow-x: auto; white-space: pre; margin: 16px 0; font-size: 13.5p
 .refs { font-size: 15.5px; padding-left: 1.4em; }
 .refs li { margin-bottom: .7em; }
 
+.more { padding: 40px 0 36px; }
+.sisters { list-style: none; padding: 0; margin: 12px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px 32px; }
+.sisters li { font-size: 16px; line-height: 1.4; }
+.sisters a { font-family: var(--type); font-weight: 700; font-size: 15px; display: block; }
+.sisters span { color: var(--ink-soft); }
+
 footer { border-top: 2px solid var(--ink); padding: 28px 0 48px; font-family: var(--type); font-size: 14px; color: var(--ink-soft); }
 footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 
@@ -802,6 +808,23 @@ conn, err := client.DialContext(ctx, "tcp", "example.com:443")</pre>
       <li>XTLS. <a href="https://github.com/XTLS/REALITY">REALITY</a> and <a href="https://github.com/XTLS/Xray-core">Xray-core</a>, including the Vision design discussion <a href="https://github.com/XTLS/Xray-core/discussions/1295">#1295</a>.</li>
       <li>net4people/bbs: <a href="https://github.com/net4people/bbs/issues/490">#490</a> (Russia freezing TLS connections after about 16 KB), <a href="https://github.com/net4people/bbs/issues/546">#546</a> (Russia policing TLS connection counts on port 443), <a href="https://github.com/net4people/bbs/issues/576">#576</a> (REALITY detected by handshake replay).</li>
     </ol>
+  </div>
+</section>
+
+<section id="more" class="more">
+  <div class="wrap">
+    <span class="num">More from Lantern</span>
+    <ul class="sisters">
+      <li><a href="https://lantern.io">Lantern</a><span>free VPN and censorship-circumvention app</span></li>
+      <li><a href="https://soar.lantern.io">Soar</a><span>DNS tunnel for networks that censor everything but DNS</span></li>
+      <li><a href="https://kindling.lantern.io">Kindling</a><span>sends small amounts of data through censoring firewalls</span></li>
+      <li><a href="https://twiddle.lantern.io">twiddle</a><span>a TLS ClientHello, byte by byte</span></li>
+      <li><a href="https://lamplighter.lantern.io">Lamplighter</a><span>run a Lantern node</span></li>
+      <li><a href="https://corpus.lantern.io">Circumvention corpus</a><span>structured index of censorship-circumvention research</span></li>
+      <li><a href="https://geedge.lantern.io">Geedge leak index</a><span>what the Geedge/MESA leak reveals about censor capabilities</span></li>
+      <li><a href="https://ietf.lantern.io">IETF corpus</a><span>LLM-callable corpus of IETF RFCs and drafts</span></li>
+      <li><a href="https://unbounded-wp.lantern.io">Lantern Action Mode for WordPress</a><span>live demo</span></li>
+    </ul>
   </div>
 </section>
 
