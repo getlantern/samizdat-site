@@ -273,7 +273,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
         <h3>Watching the wire</h3>
         <ol>
           <li>A TLS&nbsp;1.3 ClientHello from <a href="https://github.com/refraction-networking/utls">uTLS</a> with Chrome's fingerprint, naming the cover site.</li>
-          <li>The authentication tag is the 32-byte SessionID that every TLS&nbsp;1.3 ClientHello carries anyway. It's sealed to the server's key and to that exact ClientHello, and no part of it repeats between connections.</li>
+          <li>The authentication tag sits in the 32-byte SessionID, which browsers fill with random bytes in every TLS&nbsp;1.3 ClientHello anyway. It's sealed to the server's key and to that exact ClientHello, and no part of it repeats between connections.</li>
           <li>The first ten TLS records after the handshake follow sizes and directions drawn from a model of real TLS flows, not the fixed opening of an HTTP/2 tunnel.</li>
           <li>After that, a long-lived HTTP/2 connection carries the tunnelled streams, up to 100 at a time, like a browser's.</li>
         </ol>
@@ -281,7 +281,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       <div class="sheet reveal" style="--i:2">
         <h3>Probing the server</h3>
         <ol>
-          <li>Any ClientHello without a valid tag, or one that has already been used, is forwarded byte for byte to the real cover site the server is configured with.</li>
+          <li>Any ClientHello without a valid tag, or one that has already been used, is forwarded byte for byte to the real cover site the server is configured with. (Probes that don't start with a TLS handshake are closed; see Limits.)</li>
           <li>The prober completes a real handshake with the cover site's real certificate and gets its real HTTP responses. The server doesn't rewrite or decrypt any of it.</li>
           <li>Replaying a captured ClientHello doesn't work either: the server remembers the SessionIDs it has accepted for 24 to 48 hours (less under very heavy load), and a version 2 tag expires 12 hours either side of the server's clock.</li>
           <li>Clients can pin the server's certificate, so a client that's been sent to the cover site fails instead of talking to it.</li>
@@ -470,7 +470,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       </div>
       <div>
         <h3><span class="num">E</span>Fragmented ClientHello</h3>
-        <p>Optionally, the ClientHello is split across TCP segments at the SNI, with a short random delay, in the style of <a href="https://geneva.cs.umd.edu/">Geneva</a>. A middlebox that reads the SNI from a single packet doesn't find it there.</p>
+        <p>Optionally, the ClientHello is written in pieces split around the SNI, with a short random delay, in the style of <a href="https://geneva.cs.umd.edu/">Geneva</a>, so a middlebox that reads the SNI from a single packet often doesn't find it there. It's best effort: the split can fall just outside the hostname.</p>
       </div>
       <div>
         <h3><span class="num">F</span>Legacy clients keep working</h3>
@@ -492,6 +492,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
         <li><strong>Shaping covers ten records.</strong> After that, traffic is whatever the tunnelled applications send. The schedule fixes TLS record sizes; TCP can still split or merge them into packets.</li>
         <li><strong>The model is one network's view.</strong> It was built from one regional ISP in late 2025. Real TLS elsewhere, or later, may look different, and a censor with its own data can build its own model.</li>
         <li><strong>The replay record lives in memory.</strong> A server restart forgets the SessionIDs it has accepted, and more than a million in one window shortens how long they're kept. Version 2's 12-hour time limit still applies.</li>
+        <li><strong>Probes that aren't TLS are closed.</strong> A connection that doesn't open with a TLS handshake record is closed rather than forwarded to the cover site, so it doesn't see how the cover site would react.</li>
         <li><strong>Not independently reviewed.</strong> The version 2 authentication hasn't had an outside cryptographic review, and the measurements on this page are ours, on loopback.</li>
       </ul>
     </div>
