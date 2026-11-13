@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Samizdat</title>
+<meta name="description" content="Samizdat is a censorship-circumvention protocol that hides proxy traffic inside a browser-like TLS 1.3 and HTTP/2 connection to a real website, and shapes the start of each connection like real TLS.">
+<meta property="og:title" content="Samizdat">
+<meta property="og:description" content="Proxy traffic that opens like a browser visiting a real website, measured against 326 million real TLS flows.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root {
+  --paper: #f1ecdf;
+  --paper-2: #e8e1cf;
+  --paper-edge: #d9cfb6;
+  --ink: #1b2240;
+  --ink-soft: #3c4566;
+  --ink-faint: #6f7590;
+  --carbon: #2f3a8a;
+  --pencil: #c2361f;
+  --pencil-soft: rgba(194, 54, 31, .12);
+  --rule: rgba(27, 34, 64, .18);
+  --line: rgba(27, 34, 64, .055);
+  --good: #2f6b3a;
+  --serif: 'PT Serif', Georgia, serif;
+  --type: 'Courier Prime', 'Courier New', monospace;
+  --stencil: 'Big Shoulders Stencil', 'PT Serif', serif;
+  --measure: 68ch;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #14172a;
+    --paper-2: #1b1f37;
+    --paper-edge: #2a2f4d;
+    --ink: #e7e2d3;
+    --ink-soft: #c3bfb2;
+    --ink-faint: #8e8c99;
+    --carbon: #9aa6ff;
+    --pencil: #ff7a5c;
+    --pencil-soft: rgba(255, 122, 92, .14);
+    --rule: rgba(231, 226, 211, .16);
+    --line: rgba(231, 226, 211, .04);
+    --good: #8fd19b;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14172a; --paper-2: #1b1f37; --paper-edge: #2a2f4d;
+  --ink: #e7e2d3; --ink-soft: #c3bfb2; --ink-faint: #8e8c99;
+  --carbon: #9aa6ff; --pencil: #ff7a5c; --pencil-soft: rgba(255,122,92,.14);
+  --rule: rgba(231,226,211,.16); --line: rgba(231,226,211,.04); --good: #8fd19b;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(255,255,255,.35), transparent 55%),
+    repeating-linear-gradient(0deg, transparent 0 31px, var(--line) 31px 32px);
+  background-size: auto, 100% 32px;
+  color: var(--ink);
+  font: 400 18px/1.62 var(--serif);
+  font-kerning: normal;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body { background-image: radial-gradient(ellipse at 20% 0%, rgba(154,166,255,.08), transparent 55%), repeating-linear-gradient(0deg, transparent 0 31px, var(--line) 31px 32px); }
+}
+a { color: var(--carbon); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--pencil); }
+code, kbd, pre, .type { font-family: var(--type); }
+code { font-size: .92em; background: var(--paper-2); padding: .05em .3em; border-radius: 2px; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+.col { max-width: var(--measure); }
+
+/* Masthead */
+.mast {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  padding: 18px 0; border-bottom: 2px solid var(--ink);
+  font-family: var(--type); font-size: 14px; letter-spacing: .04em; text-transform: uppercase;
+}
+.mast nav { display: flex; gap: 18px; flex-wrap: wrap; justify-content: flex-end; }
+.mast a { color: var(--ink); text-decoration: none; }
+.mast a:hover { color: var(--pencil); }
+.mast .no { color: var(--ink-faint); }
+
+/* Hero */
+.hero { padding: 72px 0 56px; position: relative; }
+.hero .kicker { font-family: var(--type); color: var(--ink-faint); font-size: 15px; letter-spacing: .06em; }
+.hero h1 {
+  font-family: var(--stencil); font-weight: 900; text-transform: uppercase;
+  font-size: clamp(64px, 14vw, 168px); line-height: .86; letter-spacing: .01em;
+  margin: 10px 0 0; color: var(--ink);
+}
+.hero h1 .ru {
+  display: block; font-family: var(--serif); font-weight: 700; text-transform: none; font-style: italic;
+  font-size: .32em; letter-spacing: 0; line-height: 1.2; color: var(--carbon); margin-top: .3em;
+}
+.hero .lede { font-size: clamp(20px, 2.6vw, 26px); line-height: 1.45; max-width: 38ch; margin: 28px 0 0; }
+.hero .lede em { font-style: normal; background: linear-gradient(transparent 62%, var(--pencil-soft) 62%); }
+.stamp {
+  position: absolute; right: 0; top: 84px; transform: rotate(-9deg);
+  border: 3px double var(--pencil); color: var(--pencil); padding: 10px 16px;
+  font-family: var(--type); font-weight: 700; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; line-height: 1.35;
+  text-align: center; opacity: .85; mix-blend-mode: multiply;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stamp { mix-blend-mode: normal; } }
+.cta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 34px; }
+.btn {
+  font-family: var(--type); font-weight: 700; font-size: 15px; letter-spacing: .03em;
+  padding: 12px 18px; border: 2px solid var(--ink); color: var(--ink); text-decoration: none; background: var(--paper);
+  box-shadow: 4px 4px 0 var(--ink); transition: transform .12s, box-shadow .12s;
+}
+.btn:hover { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--paper); }
+.btn.primary:hover { color: var(--paper); }
+
+/* Typed sheet: the carbon-copy card */
+.sheet {
+  background: var(--paper-2); border: 1px solid var(--paper-edge);
+  box-shadow: 0 1px 0 var(--paper-edge), 6px 8px 0 -2px var(--paper-edge);
+  padding: 22px 24px; font-family: var(--type); font-size: 15px; line-height: 1.55; position: relative;
+}
+.sheet::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 3px, rgba(47,58,138,.025) 3px 4px);
+}
+
+section { padding: 64px 0; border-top: 1px solid var(--rule); }
+section > .wrap > h2, .h2 {
+  font-family: var(--stencil); font-weight: 900; text-transform: uppercase; letter-spacing: .015em;
+  font-size: clamp(38px, 6vw, 64px); line-height: .95; margin: 0 0 22px;
+}
+.num { font-family: var(--type); color: var(--pencil); font-size: 15px; letter-spacing: .08em; display: block; margin-bottom: 8px; }
+h3 { font-family: var(--serif); font-size: 23px; line-height: 1.25; margin: 34px 0 8px; }
+p { margin: 0 0 1em; }
+
+.note {
+  font-family: var(--type); font-size: 14.5px; line-height: 1.5; color: var(--pencil);
+  border-left: 3px solid var(--pencil); padding: 4px 0 4px 14px; margin: 18px 0;
+}
+
+/* Two observers */
+.observers { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 30px; }
+.observers .sheet h3 { font-family: var(--type); font-size: 15px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 12px; color: var(--carbon); }
+.observers ol { margin: 0; padding-left: 1.3em; }
+.observers li { margin-bottom: .45em; }
+
+/* Bar chart */
+.chart { margin: 30px 0 10px; display: grid; gap: 12px; }
+.bar { display: grid; grid-template-columns: minmax(150px, 260px) 1fr; gap: 14px; align-items: center; }
+.bar .label { font-family: var(--type); font-size: 14.5px; line-height: 1.3; }
+.bar .track { display: block; position: relative; height: 30px; border-bottom: 1px solid var(--rule); }
+.bar .fill {
+  display: block; height: 100%; width: calc(var(--v) / 70 * 100%);
+  background: repeating-linear-gradient(-45deg, var(--ink) 0 2px, transparent 2px 6px);
+  border: 2px solid var(--ink); transform-origin: left; animation: grow 1.1s cubic-bezier(.2,.8,.2,1) both;
+}
+.bar.us .fill { background: var(--carbon); border-color: var(--carbon); }
+.bar.floor .fill { background: transparent; border-style: dashed; }
+.bar .val { position: absolute; left: calc(var(--v) / 70 * 100% + 8px); top: 3px; font-family: var(--type); font-weight: 700; font-size: 15px; white-space: nowrap; }
+.bar.us .val { color: var(--carbon); }
+.chart-cap { font-family: var(--type); font-size: 13.5px; color: var(--ink-faint); margin-top: 8px; }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Findings list */
+.findings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 40px; margin-top: 30px; }
+.finding { border-top: 3px solid var(--ink); padding-top: 12px; }
+.finding .big { font-family: var(--stencil); font-weight: 900; font-size: 46px; line-height: 1; display: block; }
+.finding .big small { font-size: .45em; font-family: var(--type); font-weight: 700; }
+.finding p { font-size: 16.5px; margin: 8px 0 0; }
+.finding cite { font-style: normal; font-family: var(--type); font-size: 13px; color: var(--ink-faint); display: block; margin-top: 6px; }
+
+/* Comparison table */
+.table-scroll { overflow-x: auto; margin: 30px -16px 0; padding: 0 16px 8px; -webkit-overflow-scrolling: touch; }
+table.cmp { border-collapse: collapse; table-layout: fixed; min-width: 1060px; width: 100%; font-size: 15px; line-height: 1.45; background: var(--paper); }
+.cmp th, .cmp td { text-align: left; vertical-align: top; padding: 11px 12px; border-bottom: 1px solid var(--rule); }
+.cmp thead th {
+  font-family: var(--type); font-size: 13.5px; text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: 2px solid var(--ink); position: sticky; top: 0; background: var(--paper);
+}
+.cmp tbody th { font-family: var(--type); font-weight: 700; font-size: 13.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); }
+.cmp col.rowh { width: 128px; }
+.cmp col.szc { width: 21%; }
+.cmp .sz { background: var(--pencil-soft); }
+.cmp thead .sz { color: var(--pencil); background: var(--paper); box-shadow: inset 0 -3px 0 var(--pencil); }
+.cmp td .src { display: block; font-family: var(--type); font-size: 12px; color: var(--ink-faint); margin-top: 4px; }
+.cmp td .src a { color: inherit; }
+.tag { font-family: var(--type); font-size: 12px; font-weight: 700; letter-spacing: .05em; padding: 1px 6px; border: 1px solid currentColor; display: inline-block; margin-bottom: 4px; }
+.tag.y { color: var(--good); }
+.tag.n { color: var(--pencil); }
+.tag.m { color: var(--ink-faint); }
+
+/* How it works */
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px 36px; margin-top: 18px; }
+.how h3 { margin-top: 10px; }
+.how h3 .num { display: inline; margin: 0 8px 0 0; }
+pre.sheet { overflow-x: auto; white-space: pre; margin: 16px 0; font-size: 13.5px; }
+
+/* Limits */
+.limits { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 14px; }
+.limits li { padding-left: 34px; position: relative; }
+.limits li::before { content: "✕"; position: absolute; left: 0; top: 0; font-family: var(--type); font-weight: 700; color: var(--pencil); }
+
+/* References */
+.refs { font-size: 15.5px; padding-left: 1.4em; }
+.refs li { margin-bottom: .7em; }
+
+footer { border-top: 2px solid var(--ink); padding: 28px 0 48px; font-family: var(--type); font-size: 14px; color: var(--ink-soft); }
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+/* Page-load reveal */
+.reveal { animation: rise .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 90ms); }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.caret::after { content: "▍"; animation: blink 1s steps(1) infinite; color: var(--pencil); margin-left: 2px; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .bar .fill { animation: none; }
+  .caret::after { animation: none; }
+}
+
+@media (max-width: 760px) {
+  body { font-size: 17px; }
+  .stamp { position: static; display: inline-block; margin-top: 24px; transform: rotate(-4deg); }
+  .hero { padding-top: 44px; }
+  .observers, .findings { grid-template-columns: 1fr; }
+  .bar { grid-template-columns: 1fr; gap: 4px; }
+  .mast { flex-direction: column; align-items: flex-start; }
+  .mast nav { justify-content: flex-start; gap: 12px; }
+  section { padding: 48px 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="mast">
+    <span><span class="no">№ 1</span> &nbsp;Samizdat</span>
+    <nav aria-label="Sections">
+      <a href="#observer">The observer</a>
+      <a href="#cenkl">The first packets</a>
+      <a href="#compare">Compared</a>
+      <a href="#how">How it works</a>
+      <a href="#limits">Limits</a>
+      <a href="https://github.com/getlantern/samizdat">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="kicker reveal" style="--i:0">A censorship-circumvention protocol from Lantern</div>
+    <h1 class="reveal" style="--i:1">Samizdat<span class="ru">самиздат: copied by hand, passed on in secret</span></h1>
+    <p class="lede reveal" style="--i:2">Proxy traffic inside an ordinary TLS&nbsp;1.3 and HTTP/2 connection to a real website, with <em>the start of every connection shaped like real TLS</em>.</p>
+    <div class="cta reveal" style="--i:3">
+      <a class="btn primary" href="https://github.com/getlantern/samizdat">Read the source</a>
+      <a class="btn" href="#compare">Compare with VLESS, Vision, REALITY</a>
+    </div>
+    <div class="stamp" aria-hidden="true">Shaped to<br>326,531,763<br>real TLS flows</div>
+  </div>
+</div>
+
+<section id="observer">
+  <div class="wrap">
+    <span class="num">01 — what a censor sees</span>
+    <h2>Two kinds of observer</h2>
+    <div class="col">
+      <p>A censor can watch a connection, or it can poke at the server. Samizdat is built so that both see a browser and a website. The client connects to the server's IP address and names a <em>cover site</em> in the TLS handshake. The server is not that site. It holds the key to tell its own clients from everyone else, and hands everyone else to the real cover site.</p>
+    </div>
+    <div class="observers">
+      <div class="sheet reveal" style="--i:1">
+        <h3>Watching the wire</h3>
+        <ol>
+          <li>A TLS&nbsp;1.3 ClientHello from <a href="https://github.com/refraction-networking/utls">uTLS</a> with Chrome's fingerprint, naming the cover site.</li>
+          <li>The authentication tag is the 32-byte SessionID that every TLS&nbsp;1.3 ClientHello carries anyway. It's sealed to the server's key and to that exact ClientHello, and no part of it repeats between connections.</li>
+          <li>The first ten TLS records after the handshake follow sizes and directions drawn from a model of real TLS flows, not the fixed opening of an HTTP/2 tunnel.</li>
+          <li>After that, one long-lived HTTP/2 connection carries every tunnelled stream, like a browser's.</li>
+        </ol>
+      </div>
+      <div class="sheet reveal" style="--i:2">
+        <h3>Probing the server</h3>
+        <ol>
+          <li>Any ClientHello without a valid tag, or one that has already been used, is forwarded byte for byte to the real cover site.</li>
+          <li>The prober completes a real handshake with the cover site's real certificate and gets its real HTTP responses. The server never parses them.</li>
+          <li>Replaying a captured ClientHello doesn't work either: the server remembers every SessionID it has accepted for 24 to 48 hours, and a version 2 tag expires 12 hours either side of the server's clock.</li>
+          <li>Clients can pin the server's certificate, so a client that's been sent to the cover site fails instead of talking to it.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="cenkl">
+  <div class="wrap">
+    <span class="num">02 — the first packets give it away</span>
+    <h2>What CenKL found</h2>
+    <div class="col">
+      <p>In late 2025, researchers at the University of Michigan and elsewhere recorded <strong>326,531,763 real TLS flows</strong> at a regional ISP and built a model of how real TLS connections begin: the size and direction of each packet after the handshake. They then measured how far nine circumvention protocols stray from it, using KL divergence (in nats; 0 means identical).</p>
+      <p>Their conclusion: <q>all of them are distinguishable from real-world TLS</q>, <q>as early as the first post-handshake packet</q>.</p>
+    </div>
+
+    <div class="findings">
+      <div class="finding reveal" style="--i:1">
+        <span class="big">1208<small> bytes</small></span>
+        <p>Trojan, VMess, VLESS and XTLS Vision send unusually many 1,208-byte packets in their first three packets after the handshake. Real TLS does that at the first packet only 0.38% of the time. The cause is Go's dynamic TLS record sizing, which Xray leaves on.</p>
+        <cite>CenKL §4, Fig. 3 a–d</cite>
+      </div>
+      <div class="finding reveal" style="--i:2">
+        <span class="big">71.7<small>%</small></span>
+        <p>of XTLS Vision connections send a 1,208-byte packet first. Vision pads the inner TLS handshake to 900–1,400 bytes, and 38.4% of that range is above 1,208, so the padding makes the record-sizing tell more common, not less.</p>
+        <cite>CenKL §4</cite>
+      </div>
+      <div class="finding reveal" style="--i:3">
+        <span class="big">28.88<small> nats</small></span>
+        <p>from NaïveProxy's first packets, and 27.81 from VLESS-over-gRPC. HTTP/2 tunnels open with a connection preface, SETTINGS and a CONNECT in a fixed pattern, which real TLS rarely produces. Samizdat's tunnel is HTTP/2 too.</p>
+        <cite>CenKL §4, Fig. 3 f–g</cite>
+      </div>
+      <div class="finding reveal" style="--i:4">
+        <span class="big">0.977<small> → 0.830</small></span>
+        <p>The authors' countermeasure, ProxyShaper, reshapes a connection's first 10 TLS records with sizes and directions drawn from their model. Against VLESS, it cut a gradient-boosted classifier's precision from 0.977 to 0.830. It helps; it doesn't make a proxy invisible.</p>
+        <cite>CenKL §5, Table 3</cite>
+      </div>
+    </div>
+
+    <h3>Samizdat, measured against the same model</h3>
+    <div class="col">
+      <p>Samizdat now does what ProxyShaper does, by default at both ends. Both sides derive a shared seed from the TLS session's exported keying material, draw the same ten-record schedule from CenKL's released order-1 Markov model, and send exactly those record sizes in those directions, carrying HTTP/2 data inside and padding the rest. It also turns off Go's dynamic record sizing and drops TLS session tickets, which added a tell of their own.</p>
+    </div>
+    <div class="chart" role="img" aria-label="KL divergence from CenKL's TLS model over the first 10 packets: samizdat unshaped 63.0 nats, shaped with session tickets 37.6, shaped without the 1,448-byte cap 15.2, shaped as shipped 12.4, real TLS sampled from the model 11.3.">
+      <div class="bar"><span class="label">Samizdat, unshaped</span><span class="track"><span class="fill" style="--v:63.0"></span><span class="val" style="--v:63.0">63.0</span></span></div>
+      <div class="bar"><span class="label">Shaped, session tickets on</span><span class="track"><span class="fill" style="--v:37.6"></span><span class="val" style="--v:37.6">37.6</span></span></div>
+      <div class="bar"><span class="label">Shaped, no 1,448-byte cap</span><span class="track"><span class="fill" style="--v:15.2"></span><span class="val" style="--v:15.2">15.2</span></span></div>
+      <div class="bar us"><span class="label">Samizdat as shipped</span><span class="track"><span class="fill" style="--v:12.4"></span><span class="val" style="--v:12.4">12.4</span></span></div>
+      <div class="bar floor"><span class="label">Real TLS, sampled from the model</span><span class="track"><span class="fill" style="--v:11.3"></span><span class="val" style="--v:11.3">11.3 (floor)</span></span></div>
+    </div>
+    <p class="chart-cap">Nats of KL divergence from CenKL's size-and-direction model, first 10 packets after the handshake, 800 flows each on loopback, segmented at a 1,448-byte MSS. The floor isn't zero because 800 flows is a finite sample: real TLS drawn from the model itself scores 11.3. These are our measurements with the authors' released model, not the paper's; see <a href="https://github.com/getlantern/samizdat/pull/29">samizdat#29</a>.</p>
+    <div class="col">
+      <p class="note">The 1,448-byte cap matters. CenKL's model counts 1,460-byte packets, from senders without TCP timestamps. Linux servers send timestamps and fit 1,448 bytes, so a scheduled 1,460-byte record leaves as two packets, 1,448 and 12. The paper notes the same mismatch in its own testbed. Samizdat leaves sizes above 1,448 out of the schedule.</p>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <span class="num">03 — side by side</span>
+    <h2>Compared</h2>
+    <div class="col">
+      <p>How samizdat's defaults compare with the protocols it's most often weighed against. Every claim about another protocol comes from its source code, its authors, or a peer-reviewed measurement, linked in the cell. Where no one has measured something, the table says so. Nobody outside Lantern has evaluated samizdat yet.</p>
+    </div>
+    <div class="table-scroll" tabindex="0" aria-label="Comparison table, scrolls horizontally">
+      <table class="cmp">
+        <colgroup><col class="rowh"><col class="szc"><col><col><col><col><col></colgroup>
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col" class="sz">Samizdat</th>
+            <th scope="col">VLESS + TLS</th>
+            <th scope="col">VLESS + Vision</th>
+            <th scope="col">REALITY</th>
+            <th scope="col">Trojan</th>
+            <th scope="col">NaïveProxy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Client auth</th>
+            <td class="sz">X25519 secret with the client's key share; AES-GCM seals time and short ID into the SessionID, bound to the whole ClientHello</td>
+            <td>UUID, sent inside TLS<span class="src"><a href="https://xtls.github.io/en/config/inbounds/vless.html">Xray docs</a></span></td>
+            <td>Same as VLESS</td>
+            <td>X25519 secret with the client's key share; AES-GCM seals version, time and short ID into the SessionID, bound to the whole ClientHello<span class="src"><a href="https://github.com/XTLS/REALITY/blob/4a26e87788f5e08cb9d433c1fab94bc15a8bf653/tls.go#L241-L263">REALITY tls.go</a></span></td>
+            <td>SHA-224 of the password, sent inside TLS<span class="src"><a href="https://trojan-gfw.github.io/trojan/protocol">Trojan protocol</a></span></td>
+            <td>HTTP proxy authorization, inside TLS<span class="src"><a href="https://github.com/klzgrad/naiveproxy">NaïveProxy README</a></span></td>
+          </tr>
+          <tr>
+            <th scope="row">What a prober gets</th>
+            <td class="sz"><span class="tag y">Real cover site</span><br>Raw bytes forwarded to it: its certificate, its TLS stack, its pages</td>
+            <td><span class="tag m">Operator's fallback</span><br>A configured fallback server, behind the operator's own certificate<span class="src"><a href="https://github.com/XTLS/Xray-core/blob/c456141815359e1d2c00dfc673f5f26adf22fae2/proxy/vless/inbound/inbound.go#L286-L308">inbound.go</a></span></td>
+            <td><span class="tag m">Operator's fallback</span><br>Same as VLESS</td>
+            <td><span class="tag y">Real target site</span><br>Raw bytes piped to the target<span class="src"><a href="https://github.com/XTLS/REALITY/blob/4a26e87788f5e08cb9d433c1fab94bc15a8bf653/tls.go#L279-L294">tls.go</a></span></td>
+            <td><span class="tag m">Operator's fallback</span><br>A preset endpoint, 127.0.0.1:80 by default, behind the operator's certificate<span class="src"><a href="https://trojan-gfw.github.io/trojan/protocol">Trojan protocol</a></span></td>
+            <td><span class="tag m">Operator's web server</span><br>Caddy serving a site, behind the operator's certificate<span class="src"><a href="https://github.com/klzgrad/naiveproxy">README</a></span></td>
+          </tr>
+          <tr>
+            <th scope="row">Replaying a captured handshake</th>
+            <td class="sz"><span class="tag y">Refused</span><br>Every accepted SessionID is remembered for 24–48 h and sent to the cover site if seen again; version 2 tags also expire after 12 h. Memory only: a restart forgets.</td>
+            <td><span class="tag m">Not applicable</span><br>Auth is inside TLS, so a copied ClientHello carries none</td>
+            <td><span class="tag m">Not applicable</span></td>
+            <td><span class="tag n">No replay cache</span><br>The time check is off by default (<code>maxTimeDiff</code> 0). A 2026 proof of concept tells REALITY apart by replaying handshakes.<span class="src"><a href="https://github.com/XTLS/REALITY/blob/4a26e87788f5e08cb9d433c1fab94bc15a8bf653/handshake_server_tls13.go#L185">handshake_server_tls13.go</a> · <a href="https://github.com/net4people/bbs/issues/576">net4people #576</a></span></td>
+            <td><span class="tag m">Not applicable</span></td>
+            <td><span class="tag m">Not applicable</span></td>
+          </tr>
+          <tr>
+            <th scope="row">If the cover site is down</th>
+            <td class="sz">Clients still connect; only probes are affected</td>
+            <td>Not applicable</td>
+            <td>Not applicable</td>
+            <td><span class="tag n">Clients fail too</span><br>The server dials the target on every connection and closes the client's if that fails<span class="src"><a href="https://github.com/XTLS/REALITY/blob/4a26e87788f5e08cb9d433c1fab94bc15a8bf653/tls.go#L169-L173">tls.go</a></span></td>
+            <td>Not applicable</td>
+            <td>Not applicable</td>
+          </tr>
+          <tr>
+            <th scope="row">Multiplexing</th>
+            <td class="sz"><span class="tag y">Always</span><br>HTTP/2 CONNECT: one TLS connection carries every stream</td>
+            <td><span class="tag n">Off by default</span><br>Mux is optional<span class="src"><a href="https://github.com/XTLS/Xray-core/blob/c456141815359e1d2c00dfc673f5f26adf22fae2/proxy/vless/outbound/outbound.go#L220-L221">outbound.go</a></span></td>
+            <td><span class="tag n">Off</span><br>Vision breaks mux connections that carry TCP<span class="src"><a href="https://github.com/XTLS/Xray-core/blob/c456141815359e1d2c00dfc673f5f26adf22fae2/proxy/vless/outbound/outbound.go#L259-L260">outbound.go</a></span></td>
+            <td><span class="tag n">Not recommended</span><br>Its README pairs it with Vision<span class="src"><a href="https://github.com/XTLS/REALITY/blob/4a26e87788f5e08cb9d433c1fab94bc15a8bf653/README.en.md">README</a></span></td>
+            <td><span class="tag n">No</span><br>One tunnel per request</td>
+            <td><span class="tag y">Yes</span><br>HTTP/2 CONNECT</td>
+          </tr>
+          <tr>
+            <th scope="row">How connections start</th>
+            <td class="sz"><span class="tag y">Shaped</span><br>First 10 records drawn from CenKL's model of real TLS; dynamic record sizing off. 12.4 nats against an 11.3 floor in our measurement.</td>
+            <td><span class="tag n">Unshaped</span><br>Go's 1,208-byte records stand out in the first three packets<span class="src">CenKL §4</span></td>
+            <td><span class="tag n">Padded</span><br>Inner handshake padded to 900–1,399 bytes; 71.7% of connections send a 1,208-byte first packet<span class="src">CenKL §4 · <a href="https://github.com/XTLS/Xray-core/blob/c456141815359e1d2c00dfc673f5f26adf22fae2/proxy/proxy.go#L507-L517">proxy.go</a></span></td>
+            <td><span class="tag m">Not measured</span><br>CenKL didn't test REALITY; with Vision it carries Vision's padding</td>
+            <td><span class="tag n">Unshaped</span><br>The same 1,208-byte records<span class="src">CenKL §4</span></td>
+            <td><span class="tag n">Distinctive</span><br>HTTP/2 opening adds 28.88 nats despite padding its first 8 reads and writes<span class="src">CenKL §4</span></td>
+          </tr>
+          <tr>
+            <th scope="row">TLS-in-TLS detection (TPR)</th>
+            <td class="sz"><span class="tag m">Not measured</span><br>Tunnelled TLS is still inside; HTTP/2 multiplexing and splitting inner records across DATA frames are meant to blur it</td>
+            <td>0.748<span class="src">Xue et al. 2024, Table 3</span></td>
+            <td>0.513 at 0.20% FPR, with a classifier built for Vision<span class="src">Xue et al. 2024, §7.2</span></td>
+            <td><span class="tag m">Not measured</span></td>
+            <td>0.737; 0.179 with 8 concurrent streams (trojan-go)<span class="src">Xue et al. 2024, Table 3</span></td>
+            <td>0.328<span class="src">Xue et al. 2024, Table 3</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Timing</th>
+            <td class="sz"><span class="tag n">Not shaped</span><br>Adds 1–30 ms jitter, which research suggests doesn't help (see Limits)</td>
+            <td><span class="tag n">Not shaped</span></td>
+            <td><span class="tag n">Not shaped</span></td>
+            <td><span class="tag n">Not shaped</span></td>
+            <td><span class="tag n">Not shaped</span></td>
+            <td><span class="tag n">Not shaped</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="chart-cap">Xray-core read at <code>c456141</code> and REALITY at <code>4a26e87</code> (November 2026). TPR = true positive rate of the attack in Xue et al., USENIX Security 2024; their deployment measured false positives over 110 million real flows. Neither paper evaluated REALITY.</p>
+
+    <div class="col">
+      <h3>REALITY is the closest relative</h3>
+      <p>Samizdat's version 2 authentication is REALITY's idea, implemented independently: an X25519 secret between the client's ordinary key share and the server's static key, an AES-GCM seal over a time and a short ID, and the whole ClientHello as associated data, so a copied tag fails in any other handshake. The differences are in what surrounds it: samizdat remembers what it has accepted, checks the time by default, doesn't need the cover site to be reachable for its own clients, multiplexes over HTTP/2, and shapes the start of the connection. REALITY hands authenticated clients a throwaway certificate signed with the shared key; samizdat serves its own and lets clients pin it.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <span class="num">04 — under the hood</span>
+    <h2>How it works</h2>
+    <div class="how">
+      <div>
+        <h3><span class="num">A</span>Authentication in the SessionID</h3>
+        <p>The client takes an X25519 secret between its own key share and the server's public key, derives an AES-256-GCM key with HKDF over the ClientHello's random, and seals <code>version ‖ time ‖ short ID</code> with the rest of the ClientHello as associated data. The 32 bytes that come out replace the SessionID. Older clients send version 1, an HMAC tag; servers accept both until told otherwise.</p>
+      </div>
+      <div>
+        <h3><span class="num">B</span>Masquerade</h3>
+        <p>A connection that doesn't authenticate is spliced, raw, to the cover site's real address. The server buffers only the ClientHello it read to decide, replays it to the cover site, and copies bytes both ways until either side closes. It never parses or alters them.</p>
+      </div>
+      <div>
+        <h3><span class="num">C</span>Connection-start shaping</h3>
+        <p>Both ends export keying material from the finished TLS session. 32 bytes seed a ChaCha8 sampler that draws ten records' sizes and directions from the model; 8 bytes become a marker that tells the server this client shapes. During the schedule each side sends exactly its scheduled records, carrying queued HTTP/2 bytes and padding. After the tenth, data passes straight through.</p>
+      </div>
+      <div>
+        <h3><span class="num">D</span>One connection, many streams</h3>
+        <p>Every proxied connection is an HTTP/2 CONNECT stream on one long-lived TLS connection, so a censor counting TLS connections to an address sees one. Servers run samizdat's own lean HTTP/2 server, which batches frames into fewer TLS records and system calls: 66–90% less server CPU per gigabyte downloaded than Go's standard one in benchmarks, with the same frames on the wire.</p>
+      </div>
+      <div>
+        <h3><span class="num">E</span>Fragmented ClientHello</h3>
+        <p>Optionally, the ClientHello is split across TCP segments at the SNI, with a short random delay, in the style of <a href="https://geneva.cs.umd.edu/">Geneva</a>. A middlebox that reads the SNI from a single packet doesn't find it there.</p>
+      </div>
+      <div>
+        <h3><span class="num">F</span>Legacy clients keep working</h3>
+        <p>A server reads the first 8 bytes after the handshake. The shaping marker means a shaping client; an HTTP/2 preface means an older one, which is served exactly as before. New servers serve every client released so far; new clients need new servers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="limits">
+  <div class="wrap">
+    <span class="num">05 — what it doesn't do</span>
+    <h2>Limits</h2>
+    <div class="col">
+      <p>No proxy that carries real traffic is invisible. These are the gaps we know about.</p>
+      <ul class="limits">
+        <li><strong>Timing isn't shaped.</strong> CenKL's timing-aware classifier still reaches about 0.9 recall against shaped traffic. Samizdat's 1–30 ms random jitter isn't a fix: Xue et al. (NDSS 2025) found that random delays like obfs4's can make cross-layer RTT fingerprinting easier, not harder.</li>
+        <li><strong>Tunnelled TLS is still inside.</strong> Applications using samizdat bring their own TLS, so there is TLS inside samizdat's TLS. Multiplexing helps most when several streams share the connection; Xue et al. (USENIX Security 2024) found it far weaker with only one.</li>
+        <li><strong>Shaping covers ten records.</strong> After that, traffic is whatever the tunnelled applications send. The schedule fixes TLS record sizes; TCP can still split or merge them into packets.</li>
+        <li><strong>The model is one network's view.</strong> It was built from one regional ISP in late 2025. Real TLS elsewhere, or later, may look different, and a censor with its own data can build its own model.</li>
+        <li><strong>The replay record lives in memory.</strong> A server restart forgets the SessionIDs it has accepted. Version 2's 12-hour time limit still applies.</li>
+        <li><strong>Not independently reviewed.</strong> The version 2 authentication hasn't had an outside cryptographic review, and the measurements on this page are ours, on loopback.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="use">
+  <div class="wrap">
+    <span class="num">06 — use it</span>
+    <h2>Use it</h2>
+    <div class="col">
+      <p>Samizdat is a Go library with no sing-box dependency, and an inbound and outbound in <a href="https://github.com/getlantern/lantern-box">lantern-box</a>. Lantern's apps use it today.</p>
+    </div>
+<pre class="sheet">go get github.com/getlantern/samizdat
+
+client, err := samizdat.NewClient(samizdat.ClientConfig{
+    ServerAddr:  "203.0.113.7:443",
+    ServerName:  "cover.example",   // the cover site named in the handshake
+    PublicKey:   serverPublicKey,   // 32-byte X25519 public key
+    ShortID:     shortID,           // 8-byte client identifier
+    Fingerprint: "chrome",
+})
+conn, err := client.DialContext(ctx, "tcp", "example.com:443")</pre>
+<pre class="sheet">// lantern-box (sing-box) outbound
+{
+  "type": "samizdat",
+  "tag": "samizdat-out",
+  "server": "203.0.113.7",
+  "server_port": 443,
+  "public_key": "&lt;64 hex chars&gt;",
+  "short_id": "&lt;16 hex chars&gt;",
+  "server_name": "cover.example",
+  "cert_spki_sha256": "&lt;optional pin, 64 hex chars&gt;"
+}</pre>
+    <div class="col">
+      <p>Generate keys with <code>go run ./cmd/samizdat-server --genkeys</code>. Pick a cover site that's reachable from the server, serves TLS&nbsp;1.3 with HTTP/2, and is unremarkable on the network you're getting around.</p>
+    </div>
+  </div>
+</section>
+
+<section id="refs">
+  <div class="wrap">
+    <span class="num">07 — sources</span>
+    <h2>References</h2>
+    <ol class="refs col">
+      <li>Aaron Ortwein, Armin Huremagic, Shabbir Hussain, Holly Bergen, Joshua J. Daymude, Diwen Xue, Jedidiah R. Crandall, Roya Ensafi. <a href="https://aaron-ortwein.github.io/papers/cenkl.pdf"><em>CenKL: Information-Theoretic Visibility into Censorship Circumvention Traffic Patterns.</em></a> IEEE Symposium on Security and Privacy, 2027. Models and ProxyShaper: <a href="https://github.com/censoredplanet/obfuscation">censoredplanet/obfuscation</a>, <a href="https://github.com/censoredplanet/Xray-ProxyShaper">censoredplanet/Xray-ProxyShaper</a>.</li>
+      <li>Diwen Xue, Michalis Kallitsis, Amir Houmansadr, Roya Ensafi. <a href="https://www.usenix.org/conference/usenixsecurity24/presentation/xue-fingerprinting"><em>Fingerprinting Obfuscated Proxy Traffic with Encapsulated TLS Handshakes.</em></a> USENIX Security 2024.</li>
+      <li>Diwen Xue, Robert Stanley, Piyush Kumar, Roya Ensafi. <a href="https://www.ndss-symposium.org/ndss-paper/the-discriminative-power-of-cross-layer-rtts-in-fingerprinting-proxy-traffic/"><em>The Discriminative Power of Cross-layer RTTs in Fingerprinting Proxy Traffic.</em></a> NDSS 2025.</li>
+      <li>Alice, Bob, Carol, Jan Beznazwy, Amir Houmansadr. <a href="https://gfw.report/publications/imc20/en/"><em>How China Detects and Blocks Shadowsocks.</em></a> IMC 2020.</li>
+      <li>Kevin Bock, George Hughey, Xiao Qiang, Dave Levin. <a href="https://geneva.cs.umd.edu/papers/geneva_ccs19.pdf"><em>Geneva: Evolving Censorship Evasion Strategies.</em></a> ACM CCS 2019.</li>
+      <li>XTLS. <a href="https://github.com/XTLS/REALITY">REALITY</a> and <a href="https://github.com/XTLS/Xray-core">Xray-core</a>, including the Vision design discussion <a href="https://github.com/XTLS/Xray-core/discussions/1295">#1295</a>.</li>
+      <li>net4people/bbs: <a href="https://github.com/net4people/bbs/issues/490">#490</a> (Russia freezing TLS connections after about 16 KB), <a href="https://github.com/net4people/bbs/issues/546">#546</a> (Russia policing TLS connection counts on port 443), <a href="https://github.com/net4people/bbs/issues/576">#576</a> (REALITY detected by handshake replay).</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Samizdat is open source, from <a href="https://lantern.io">Lantern</a>.</span>
+    <span><a href="https://github.com/getlantern/samizdat">github.com/getlantern/samizdat</a> · <a href="https://github.com/getlantern/samizdat-site">site source</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
