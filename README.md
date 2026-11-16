@@ -14,6 +14,6 @@ The FAQ lives in `tools/faq.py`, which writes both the visible FAQ section and t
 
 ## Keeping it accurate
 
-Every claim about another protocol links to its source code, its authors' documentation, or a peer-reviewed measurement. Xray-core was read at `c456141` and REALITY at `4a26e87` (November 2026). When those projects change, recheck the comparison table against them. Samizdat's own numbers come from its pull requests ([#25](https://github.com/getlantern/samizdat/pull/25), [#28](https://github.com/getlantern/samizdat/pull/28), [#29](https://github.com/getlantern/samizdat/pull/29)).
+Every claim about another protocol links to its source code, its authors' documentation, or a peer-reviewed measurement. Xray-core was read at `c456141` and REALITY at `4a26e87` (November 2026). When those projects change, recheck the comparison table against them. Samizdat's own numbers come from its pull requests ([#25](https://github.com/getlantern/samizdat/pull/25), [#28](https://github.com/getlantern/samizdat/pull/28), [#29](https://github.com/getlantern/samizdat/pull/29), [#38](https://github.com/getlantern/samizdat/pull/38)).
 
 Fonts are self-hosted from Google Fonts under the SIL Open Font License 1.1: PT Serif, Courier Prime and Big Shoulders Stencil (licenses in `fonts/`).
