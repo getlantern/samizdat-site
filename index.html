@@ -666,7 +666,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       <div>
         <h3><span class="num">D</span>One connection, many streams</h3>
         <p>Every proxied connection is an HTTP/2 CONNECT stream on a long-lived TLS connection that carries up to 100 of them, so a censor counting TLS connections to an address sees few. Servers run samizdat's own lean HTTP/2 server, which batches frames into fewer TLS records and system calls: 66–90% less server CPU per gigabyte downloaded than Go's standard one in benchmarks, with the same frames on the wire.</p>
-        <p>The streams take turns. Each one's data waits in its own queue, the server sends up to 16&nbsp;KiB from each in turn, and it keeps unsent data out of the kernel, where nothing could reorder it. A new tunnel opened while a download runs waits behind one turn, not the whole download. On a real 261&nbsp;ms path shaped to 5&nbsp;Mbit/s with 0.5% loss, such a tunnel answered in 0.92&nbsp;s at the median, against 3.8&nbsp;s before (<a href="https://github.com/getlantern/samizdat/pull/38">samizdat#38</a>).</p>
+        <p>The streams take turns. Each one's data waits in its own queue, the server sends about 16&nbsp;KiB from each in turn, and it keeps most unsent data out of the kernel, where nothing could reorder it. A new tunnel opened while a download runs waits behind the write under way and one turn, not the whole download. On a real 261&nbsp;ms path shaped to 5&nbsp;Mbit/s with 0.5% loss, such a tunnel answered in 0.92&nbsp;s at the median, against 3.8&nbsp;s before (<a href="https://github.com/getlantern/samizdat/pull/38">samizdat#38</a>).</p>
       </div>
       <div>
         <h3><span class="num">E</span>Fragmented ClientHello</h3>
@@ -692,7 +692,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
         <li><strong>Shaping covers ten records.</strong> After that, traffic is whatever the tunnelled applications send. The schedule fixes TLS record sizes; TCP can still split or merge them into packets.</li>
         <li><strong>The model is one network's view.</strong> It was built from one regional ISP in late 2025. Real TLS elsewhere, or later, may look different, and a censor with its own data can build its own model.</li>
         <li><strong>The replay record lives in memory.</strong> A server restart forgets the SessionIDs it has accepted, and more than a million in one window shortens how long they're kept. Version 2's 12-hour time limit still applies.</li>
-        <li><strong>Streams share one TCP connection.</strong> A lost packet holds up every stream on it until it's resent, and a new tunnel still waits a turn behind each running download. In the same test, Shadowsocks, which opens a connection per tunnel, answered in 0.58&nbsp;s.</li>
+        <li><strong>Streams share one TCP connection.</strong> A lost packet holds up every stream on it until it's resent, and a new tunnel still waits for the write under way and a turn of each running download. In the same test, Shadowsocks, which opens a connection per tunnel, answered in 0.58&nbsp;s.</li>
         <li><strong>Not independently reviewed.</strong> The version 2 authentication hasn't had an outside cryptographic review, and the measurements on this page are ours, on loopback or one shaped long-distance path.</li>
       </ul>
     </div>
