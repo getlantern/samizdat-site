@@ -28,7 +28,7 @@ FAQ = [
      "2027) found both send telltale 1,208-byte packets right after the handshake, and "
      "71.7% of Vision connections start with one. Samizdat sends probes to a real "
      "cover site, multiplexes over HTTP/2, turns off the record sizing behind those "
-     "1,208-byte packets, and shapes its first 10 records. See the "
+     "1,208-byte packets, and shapes its first 10 packets. See the "
      "<a href=\"#compare\">comparison</a>."),
     ("Is Samizdat the same as REALITY?",
      "No, but its version 2 authentication follows REALITY's design: an X25519 secret "
@@ -55,10 +55,11 @@ FAQ = [
     ("What is connection-start shaping?",
      "Researchers found that proxies stand out in the first few packets after the TLS "
      "handshake, before much user data flows. Samizdat's client and server derive a "
-     "shared seed from the TLS session, draw the same schedule of 10 record sizes and "
-     "directions from CenKL's model of real TLS, and send exactly those records, "
-     "carrying their own data and padding the rest. After the tenth record, data "
-     "passes straight through."),
+     "shared seed from the TLS session, draw the same schedule of 10 packet sizes and "
+     "directions from CenKL's model of real TLS, and send exactly those packets, in "
+     "TLS records that span packets the way a real server's do, carrying their own "
+     "data and padding the rest. After the tenth packet, data passes straight "
+     "through."),
     ("Does Samizdat avoid TLS-in-TLS detection?",
      "Partly. Applications tunnelled through Samizdat bring their own TLS, so there is "
      "TLS inside Samizdat's TLS, as with any proxy. Samizdat multiplexes every stream "

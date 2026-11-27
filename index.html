@@ -93,7 +93,7 @@
      "name": "How is Samizdat different from VLESS and XTLS Vision?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "VLESS sends its client ID inside TLS and falls back to a server the operator runs, behind the operator's own certificate. Vision adds padding to the inner TLS handshake. Neither shapes the start of the connection: CenKL (IEEE S&P 2027) found both send telltale 1,208-byte packets right after the handshake, and 71.7% of Vision connections start with one. Samizdat sends probes to a real cover site, multiplexes over HTTP/2, turns off the record sizing behind those 1,208-byte packets, and shapes its first 10 records. See the comparison."
+      "text": "VLESS sends its client ID inside TLS and falls back to a server the operator runs, behind the operator's own certificate. Vision adds padding to the inner TLS handshake. Neither shapes the start of the connection: CenKL (IEEE S&P 2027) found both send telltale 1,208-byte packets right after the handshake, and 71.7% of Vision connections start with one. Samizdat sends probes to a real cover site, multiplexes over HTTP/2, turns off the record sizing behind those 1,208-byte packets, and shapes its first 10 packets. See the comparison."
      }
     },
     {
@@ -125,7 +125,7 @@
      "name": "What is connection-start shaping?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Researchers found that proxies stand out in the first few packets after the TLS handshake, before much user data flows. Samizdat's client and server derive a shared seed from the TLS session, draw the same schedule of 10 record sizes and directions from CenKL's model of real TLS, and send exactly those records, carrying their own data and padding the rest. After the tenth record, data passes straight through."
+      "text": "Researchers found that proxies stand out in the first few packets after the TLS handshake, before much user data flows. Samizdat's client and server derive a shared seed from the TLS session, draw the same schedule of 10 packet sizes and directions from CenKL's model of real TLS, and send exactly those packets, in TLS records that span packets the way a real server's do, carrying their own data and padding the rest. After the tenth packet, data passes straight through."
      }
     },
     {
@@ -473,7 +473,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
         <ol>
           <li>A TLS&nbsp;1.3 ClientHello from <a href="https://github.com/refraction-networking/utls">uTLS</a> with Chrome's fingerprint, naming the cover site.</li>
           <li>The authentication tag sits in the 32-byte SessionID, which browsers fill with random bytes in every TLS&nbsp;1.3 ClientHello anyway. It's sealed to the server's key and to that exact ClientHello, and no part of it repeats between connections.</li>
-          <li>The first ten TLS records after the handshake follow sizes and directions drawn from a model of real TLS flows, not the fixed opening of an HTTP/2 tunnel.</li>
+          <li>The first ten packets after the handshake follow sizes and directions drawn from a model of real TLS flows, not the fixed opening of an HTTP/2 tunnel, in TLS records that span packets the way a real server's do.</li>
           <li>After that, a long-lived HTTP/2 connection carries the tunnelled streams, up to 100 at a time, like a browser's.</li>
         </ol>
       </div>
@@ -524,7 +524,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
 
     <h3>Samizdat, measured against the same model</h3>
     <div class="col">
-      <p>Samizdat now does what ProxyShaper does, by default at both ends. Both sides derive a shared seed from the TLS session's exported keying material, draw the same ten-record schedule from CenKL's released order-1 Markov model, and send exactly those record sizes in those directions, carrying HTTP/2 data inside and padding the rest. It also turns off Go's dynamic record sizing and drops TLS session tickets, which added a tell of their own.</p>
+      <p>Samizdat now does what ProxyShaper does, by default at both ends. Both sides derive a shared seed from the TLS session's exported keying material, draw the same ten-packet schedule from CenKL's released order-1 Markov model, and send exactly those sizes in those directions, carrying HTTP/2 data inside and padding the rest. A full-size packet and the next one from the same side travel as one TLS record, as when a real server writes a record bigger than a packet. Record lengths are readable from the record headers, and until <a href="https://github.com/getlantern/samizdat/pull/44">samizdat#44</a> every packet was its own record, so none was ever longer than a packet. It also turns off Go's dynamic record sizing and drops TLS session tickets, which added a tell of their own.</p>
     </div>
     <div class="chart" role="img" aria-label="KL divergence from CenKL's TLS model over the first 10 packets: samizdat unshaped 63.0 nats, shaped with session tickets 37.6, shaped without the 1,448-byte cap 15.2, shaped as shipped 12.4, real TLS sampled from the model 11.3.">
       <div class="bar"><span class="label">Samizdat, unshaped</span><span class="track"><span class="fill" style="--v:63.0"></span><span class="val" style="--v:63.0">63.0</span></span></div>
@@ -609,7 +609,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
           </tr>
           <tr>
             <th scope="row">How connections start</th>
-            <td class="sz"><span class="tag y">Shaped</span><br>First 10 records drawn from CenKL's model of real TLS; dynamic record sizing off. 12.4 nats against an 11.3 floor in our measurement.</td>
+            <td class="sz"><span class="tag y">Shaped</span><br>First 10 packets drawn from CenKL's model of real TLS, in records that span packets like a real server's; dynamic record sizing off. 12.4 nats against an 11.3 floor in our measurement.</td>
             <td><span class="tag n">Unshaped</span><br>Go's 1,208-byte records stand out in the first three packets<span class="src">CenKL §4</span></td>
             <td><span class="tag n">Padded</span><br>Inner handshake padded to 900–1,399 bytes; 71.7% of connections send a 1,208-byte first packet<span class="src">CenKL §4 · <a href="https://github.com/XTLS/Xray-core/blob/c456141815359e1d2c00dfc673f5f26adf22fae2/proxy/proxy.go#L507-L517">proxy.go</a></span></td>
             <td><span class="tag m">Not measured</span><br>CenKL didn't test REALITY; with Vision it carries Vision's padding</td>
@@ -661,12 +661,13 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       </div>
       <div>
         <h3><span class="num">C</span>Connection-start shaping</h3>
-        <p>Both ends export keying material from the finished TLS session. 32 bytes seed a ChaCha8 sampler that draws ten records' sizes and directions from the model; 8 bytes key an HMAC over the schedule, and its first 8 bytes are a marker that tells the server this client shapes. During the schedule each side sends exactly its scheduled records, carrying queued HTTP/2 bytes and padding. After the tenth, data passes straight through.</p>
+        <p>Both ends export keying material from the finished TLS session. 32 bytes seed a ChaCha8 sampler that draws ten packets' sizes and directions from the model. A full-size packet and the next from the same side become one TLS record, which TCP cuts back into those packets; every other packet is a record of its own. 8 bytes key an HMAC over the records, and its first 8 bytes are a marker that tells the server this client shapes. During the schedule each side sends exactly its planned records, carrying queued HTTP/2 bytes and padding. After the tenth packet, data passes straight through.</p>
       </div>
       <div>
         <h3><span class="num">D</span>One connection, many streams</h3>
         <p>Every proxied connection is an HTTP/2 CONNECT stream on a long-lived TLS connection that carries up to 100 of them, so a censor counting TLS connections to an address sees few. Servers run samizdat's own lean HTTP/2 server, which batches frames into fewer TLS records and system calls: 66–90% less server CPU per gigabyte downloaded than Go's standard one in benchmarks, with the same frames on the wire.</p>
         <p>The streams take turns. Each one's data waits in its own queue, the server sends about 16&nbsp;KiB from each in turn, and it keeps most unsent data out of the kernel, where nothing could reorder it. A new tunnel opened while a download runs waits behind the write under way and one turn, not the whole download. On a real 261&nbsp;ms path shaped to 5&nbsp;Mbit/s with 0.5% loss, such a tunnel answered in 0.92&nbsp;s at the median, against 3.8&nbsp;s before (<a href="https://github.com/getlantern/samizdat/pull/38">samizdat#38</a>).</p>
+        <p>Clients ping a connection that has read nothing for about 15&nbsp;s and close it if no reply comes within 10&nbsp;s, so a connection a network drops silently is replaced in seconds, not the minutes TCP takes to give up, and a tunnel still waiting for its answer is retried on a fresh connection (<a href="https://github.com/getlantern/samizdat/pull/39">samizdat#39</a>). Each server connection accepts up to 8&nbsp;MiB of uploads ahead of what destinations have read, 1&nbsp;MiB per tunnel, so one upload whose destination stops reading doesn't stall the others (<a href="https://github.com/getlantern/samizdat/pull/43">samizdat#43</a>).</p>
       </div>
       <div>
         <h3><span class="num">E</span>Fragmented ClientHello</h3>
@@ -674,7 +675,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       </div>
       <div>
         <h3><span class="num">F</span>Legacy clients keep working</h3>
-        <p>A server reads the first 8 bytes after the handshake. The shaping marker means a shaping client; an HTTP/2 preface means an older one, which is served exactly as before. New servers serve every client released so far; new clients need new servers.</p>
+        <p>A server reads the first 8 bytes after the handshake. A shaping marker means a shaping client, including older clients that send a record per packet; an HTTP/2 preface means a client that doesn't shape, which is served exactly as before. New servers serve every client released so far; new clients need new servers.</p>
       </div>
     </div>
   </div>
@@ -689,7 +690,8 @@ footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wr
       <ul class="limits">
         <li><strong>Timing isn't shaped.</strong> CenKL's timing-aware classifier still reaches about 0.9 recall against shaped traffic. Samizdat used to add a random 1–30 ms delay before each write; it was removed because Xue et al. (NDSS 2025) found that random delays like obfs4's can make cross-layer RTT fingerprinting easier, not harder.</li>
         <li><strong>Tunnelled TLS is still inside.</strong> Applications using samizdat bring their own TLS, so there is TLS inside samizdat's TLS. Multiplexing helps most when several streams share the connection; Xue et al. (USENIX Security 2024) found it far weaker with only one.</li>
-        <li><strong>Shaping covers ten records.</strong> After that, traffic is whatever the tunnelled applications send. The schedule fixes TLS record sizes; TCP can still split or merge them into packets.</li>
+        <li><strong>Shaping covers ten packets.</strong> After that, traffic is whatever the tunnelled applications send. The schedule fixes TLS record sizes; on a path whose MSS isn't 1,448 bytes, TCP cuts them into other packets, and it can merge records written back to back.</li>
+        <li><strong>Quiet connections are pinged.</strong> A connection that reads nothing sends a small ping and gets a small reply about every 15&nbsp;s, until it has been idle for five minutes and closes: a regular pattern on an otherwise silent connection.</li>
         <li><strong>The model is one network's view.</strong> It was built from one regional ISP in late 2025. Real TLS elsewhere, or later, may look different, and a censor with its own data can build its own model.</li>
         <li><strong>The replay record lives in memory.</strong> A server restart forgets the SessionIDs it has accepted, and more than a million in one window shortens how long they're kept. Version 2's 12-hour time limit still applies.</li>
         <li><strong>Streams share one TCP connection.</strong> A lost packet holds up every stream on it until it's resent, and a new tunnel still waits for the write under way and a turn of each running download. In the same test, Shadowsocks, which opens a connection per tunnel, answered in 0.58&nbsp;s.</li>
@@ -745,7 +747,7 @@ conn, err := client.DialContext(ctx, "tcp", "example.com:443")</pre>
       </div>
       <div class="qa" id="how-is-samizdat-different-from-vless-and-xtls-vision">
         <h3><span class="q">Q.</span> How is Samizdat different from VLESS and XTLS Vision?</h3>
-        <p><span class="a">A.</span> VLESS sends its client ID inside TLS and falls back to a server the operator runs, behind the operator's own certificate. Vision adds padding to the inner TLS handshake. Neither shapes the start of the connection: CenKL (IEEE S&amp;P 2027) found both send telltale 1,208-byte packets right after the handshake, and 71.7% of Vision connections start with one. Samizdat sends probes to a real cover site, multiplexes over HTTP/2, turns off the record sizing behind those 1,208-byte packets, and shapes its first 10 records. See the <a href="#compare">comparison</a>.</p>
+        <p><span class="a">A.</span> VLESS sends its client ID inside TLS and falls back to a server the operator runs, behind the operator's own certificate. Vision adds padding to the inner TLS handshake. Neither shapes the start of the connection: CenKL (IEEE S&amp;P 2027) found both send telltale 1,208-byte packets right after the handshake, and 71.7% of Vision connections start with one. Samizdat sends probes to a real cover site, multiplexes over HTTP/2, turns off the record sizing behind those 1,208-byte packets, and shapes its first 10 packets. See the <a href="#compare">comparison</a>.</p>
       </div>
       <div class="qa" id="is-samizdat-the-same-as-reality">
         <h3><span class="q">Q.</span> Is Samizdat the same as REALITY?</h3>
@@ -761,7 +763,7 @@ conn, err := client.DialContext(ctx, "tcp", "example.com:443")</pre>
       </div>
       <div class="qa" id="what-is-connection-start-shaping">
         <h3><span class="q">Q.</span> What is connection-start shaping?</h3>
-        <p><span class="a">A.</span> Researchers found that proxies stand out in the first few packets after the TLS handshake, before much user data flows. Samizdat's client and server derive a shared seed from the TLS session, draw the same schedule of 10 record sizes and directions from CenKL's model of real TLS, and send exactly those records, carrying their own data and padding the rest. After the tenth record, data passes straight through.</p>
+        <p><span class="a">A.</span> Researchers found that proxies stand out in the first few packets after the TLS handshake, before much user data flows. Samizdat's client and server derive a shared seed from the TLS session, draw the same schedule of 10 packet sizes and directions from CenKL's model of real TLS, and send exactly those packets, in TLS records that span packets the way a real server's do, carrying their own data and padding the rest. After the tenth packet, data passes straight through.</p>
       </div>
       <div class="qa" id="does-samizdat-avoid-tls-in-tls-detection">
         <h3><span class="q">Q.</span> Does Samizdat avoid TLS-in-TLS detection?</h3>
